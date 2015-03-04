@@ -1,25 +1,18 @@
 package com.melcore.mytranslate;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ListFragment;
 import android.support.v7.widget.SearchView;
 import android.text.TextUtils;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.BaseAdapter;
 import android.widget.EditText;
-import android.widget.Filter;
-import android.widget.Filterable;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,7 +27,6 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * Main fragment
@@ -69,7 +61,7 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        View mHeader = LayoutInflater.from(getActivity()).inflate(R.layout.item_add_translation, null, false);
+        View mHeader = LayoutInflater.from(getActivity()).inflate(R.layout.item_translation_add, null, false);
         getListView().addHeaderView(mHeader, null, false);
         mTranslateEditText = (EditText) mHeader.findViewById(R.id.origin_to_add);
         mTranslationTextView = (TextView) mHeader.findViewById(R.id.translation);

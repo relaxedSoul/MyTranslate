@@ -98,13 +98,13 @@ public class DictionaryAdapter extends BaseAdapter implements Filterable {
         protected FilterResults performFiltering(CharSequence constraint) {
             FilterResults results = new FilterResults();
             boolean isEmptyConstraint = TextUtils.isEmpty(constraint);
-            ArrayList<WordPair> dictionary = new ArrayList<>(mOriginDictionary);
+            LinkedList<WordPair> dictionary = new LinkedList<>(mOriginDictionary);
             if (TextUtils.isEmpty(constraint)) {
                 results.count = dictionary.size();
                 results.values = dictionary;
                 return results;
             }
-            ArrayList<WordPair> filteredArrayPairs = new ArrayList<>();
+            LinkedList<WordPair> filteredArrayPairs = new LinkedList<>();
             if (!isEmptyConstraint) {
                 constraint = constraint.toString().toLowerCase();
                 for (int i = 0; i < dictionary.size(); i++) {

@@ -4,11 +4,9 @@
     <string name="key">trnsl.1.1.20150302T203508Z.4319a8e922d82ba3.637fc1b3c8e5d2d3b043a7e18229de20104821b7</string>
     <string name="action_settings">Settings</string>
     <string name="filter">Поиск</string>
-    <string name="add">Перевести слово</string>
     <string name="translate">Перевести</string>
     <string name="translation">Перевод:</string>
     <string name="save">Сохранить перевод</string>
-    <string name="clear">Очистить</string>
     <string name="conn_problem">Бяда. Клацни еще разок позже</string>
     <string name="type_your_origin">Введите слово для перевода</string>
 </resources>
