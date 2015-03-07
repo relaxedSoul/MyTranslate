@@ -1,5 +1,3 @@
-#
-# generated on 2012/06/06 05:55:57
 #################################
 # --table-start--
 dataClass=com.melcore.mytranslate.model.WordPair

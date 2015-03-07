@@ -7,6 +7,6 @@
     <string name="translate">Перевести</string>
     <string name="translation">Перевод:</string>
     <string name="save">Сохранить перевод</string>
-    <string name="conn_problem">Бяда. Клацни еще разок позже</string>
+    <string name="conn_problem">Ошибка. Повторите позже</string>
     <string name="type_your_origin">Введите слово для перевода</string>
 </resources>

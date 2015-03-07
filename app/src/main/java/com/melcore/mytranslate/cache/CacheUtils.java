@@ -8,7 +8,7 @@ import com.melcore.mytranslate.model.WordPair;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Cache for collecting translated words with their translation
@@ -27,8 +27,8 @@ public abstract class CacheUtils {
     }
 
     public static void releaseInstance() {
-        OpenHelperManager.releaseHelper();
         sInstance = null;
+        OpenHelperManager.releaseHelper();
     }
 
     /**
@@ -37,30 +37,25 @@ public abstract class CacheUtils {
      * @param context - context of app (activity or service or applicationContext)
      * @return stored array of wordPairs.
      */
-    public static LinkedList<WordPair> loadWordPairs(Context context) {
+    public static List<WordPair> loadWordPairs(Context context) {
         try {
-            return context == null ? new LinkedList<WordPair>() : new LinkedList<>(getInstance(context).getWordPairDao().queryBuilder().orderBy("id",false).query());
+            return context == null ? new ArrayList<WordPair>() : getInstance(context).getWordPairDao().queryBuilder().orderBy("id", false).query();
         } catch (SQLException e) {
             e.printStackTrace();
+            return new ArrayList<>();
         }
-        return new LinkedList<>();
     }
 
     /**
      * Saving incoming new pair. Will save new pair, if it's origin doesn't exist in database already
      *
      * @param context - context of app (activity or service or applicationContext)
-     * @param pair - WordPair instance for saving in Cache
+     * @param pair    - WordPair instance for saving in Cache
      * @return result of saving. If object was saved - true, otherwise - false
      */
     public static boolean saveWordPair(Context context, WordPair pair) {
-        if ((context == null || pair == null || TextUtils.isEmpty(pair.getOrigin()) || TextUtils.isEmpty(pair.getTranslate()))) {
-            return false;
-        }
-        boolean isNew= getInstance(context).getWordPairDao().queryForEq("origin", pair.getOrigin()).isEmpty();
-        if (isNew) {
-            getInstance(context).getWordPairDao().create(pair);
-        }
-        return isNew;
+        return !(context == null || pair == null || TextUtils.isEmpty(pair.getOrigin()) || TextUtils.isEmpty(pair.getTranslate()))
+                && getInstance(context).getWordPairDao().queryForEq("origin", pair.getOrigin()).isEmpty()
+                && getInstance(context).getWordPairDao().create(pair) == 1;
     }
 }

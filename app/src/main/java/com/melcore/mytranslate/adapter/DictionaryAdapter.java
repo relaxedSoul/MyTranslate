@@ -13,17 +13,13 @@ import com.melcore.mytranslate.R;
 import com.melcore.mytranslate.model.WordPair;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.List;
 
-/**
- * om-nom-nom
- * Created by Melcore on 04.03.2015.
- */
 public class DictionaryAdapter extends BaseAdapter implements Filterable {
 
     private Filter filter;
-    private LinkedList<WordPair> mDictionary;
-    private LinkedList<WordPair> mOriginDictionary;
+    private List<WordPair> mDictionary;
+    private List<WordPair> mOriginDictionary;
 
     private class ViewHolder {
         TextView origin;
@@ -33,9 +29,9 @@ public class DictionaryAdapter extends BaseAdapter implements Filterable {
     public DictionaryAdapter() {
     }
 
-    public DictionaryAdapter(LinkedList<WordPair> wordPairs) {
-        mDictionary = wordPairs == null ? new LinkedList<WordPair>() : wordPairs;
-        mOriginDictionary = new LinkedList<>(mDictionary);
+    public DictionaryAdapter(List<WordPair> wordPairs) {
+        mDictionary = wordPairs == null ? new ArrayList<WordPair>() : wordPairs;
+        mOriginDictionary = new ArrayList<>(mDictionary);
     }
 
     @Override
@@ -65,7 +61,8 @@ public class DictionaryAdapter extends BaseAdapter implements Filterable {
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
         if (convertView == null) {
-            convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_translation_record, parent, false);
+            convertView = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_translation_record, parent, false);
             holder = new ViewHolder();
             holder.origin = (TextView) convertView.findViewById(R.id.origin);
             holder.translation = (TextView) convertView.findViewById(R.id.translation);
@@ -80,45 +77,39 @@ public class DictionaryAdapter extends BaseAdapter implements Filterable {
     }
 
     public void add(WordPair pair) {
-        mDictionary.addFirst(pair);
-        mOriginDictionary.addFirst(pair);
+        mDictionary.add(0, pair);
+        mOriginDictionary.add(0, pair);
         notifyDataSetChanged();
     }
 
     private class DictionaryFilter extends Filter {
 
-        @SuppressWarnings("unchecked")
         @Override
         protected void publishResults(CharSequence constraint, FilterResults results) {
-            mDictionary = (LinkedList<WordPair>) results.values;
+            mDictionary = (ArrayList<WordPair>) results.values;
             notifyDataSetChanged();
         }
 
         @Override
         protected FilterResults performFiltering(CharSequence constraint) {
             FilterResults results = new FilterResults();
-            boolean isEmptyConstraint = TextUtils.isEmpty(constraint);
-            LinkedList<WordPair> dictionary = new LinkedList<>(mOriginDictionary);
             if (TextUtils.isEmpty(constraint)) {
-                results.count = dictionary.size();
-                results.values = dictionary;
+                results.count = mOriginDictionary.size();
+                results.values = mOriginDictionary;
                 return results;
-            }
-            LinkedList<WordPair> filteredArrayPairs = new LinkedList<>();
-            if (!isEmptyConstraint) {
-                constraint = constraint.toString().toLowerCase();
-                for (int i = 0; i < dictionary.size(); i++) {
-                    WordPair pair = dictionary.get(i);
-                    String origin = pair.getOrigin();
-                    String translate = pair.getTranslate();
-                    if (origin.toLowerCase().startsWith(constraint.toString())
-                            || translate.toLowerCase().startsWith(constraint.toString())) {
+            } else {
+                List<WordPair> filteredArrayPairs = new ArrayList<>();
+                List<WordPair> dictionary = new ArrayList<>(mOriginDictionary);
+                String search = constraint.toString().toLowerCase();
+                for (WordPair pair : dictionary) {
+                    if (pair.getOrigin().toLowerCase().contains(search)
+                            || pair.getTranslate().toLowerCase().contains(search)) {
                         filteredArrayPairs.add(pair);
                     }
                 }
+                results.count = filteredArrayPairs.size();
+                results.values = filteredArrayPairs;
             }
-            results.count = filteredArrayPairs.size();
-            results.values = filteredArrayPairs;
             return results;
         }
     }

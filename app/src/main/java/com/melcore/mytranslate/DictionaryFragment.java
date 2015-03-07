@@ -1,6 +1,5 @@
 package com.melcore.mytranslate;
 
-import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -85,7 +84,6 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
     @Override
     public void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
-
         if (!mSearchView.isIconified()) {
             state.putCharSequence(STATE_QUERY, mSearchView.getQuery());
         }
@@ -100,13 +98,11 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
 
     private void configureSearchView(Menu menu) {
         MenuItem search = menu.findItem(R.id.search);
-
         mSearchView = (SearchView) search.getActionView();
         mSearchView.setOnQueryTextListener(this);
         mSearchView.setOnCloseListener(this);
         mSearchView.setSubmitButtonEnabled(false);
         mSearchView.setIconifiedByDefault(true);
-
         if (initialQuery != null) {
             mSearchView.setIconified(false);
             search.expandActionView();
@@ -142,13 +138,13 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        adapter.getFilter().filter(TextUtils.isEmpty(newText) ? "" : newText);
+        adapter.getFilter().filter(newText);
         return true;
     }
 
     @Override
     public boolean onClose() {
-        adapter.getFilter().filter("");
+        adapter.getFilter().filter(initialQuery);
         return true;
     }
 
@@ -206,14 +202,10 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
 
         @Override
         protected void onPostExecute(WordPair wordPair) {
-            if (wordPair != null && !TextUtils.isEmpty(wordPair.getTranslate())) {
-                mTranslationTextView.setText(wordPair.getTranslate());
-            } else if (wordPair == null && !isCancelled()) {
-                Activity activity = DictionaryFragment.this.getActivity();
-                if (activity != null) {
-                    Toast.makeText(activity, R.string.conn_problem, Toast.LENGTH_SHORT).show();
-                }
+            if (wordPair == null) {
+                Toast.makeText(getActivity(), R.string.conn_problem, Toast.LENGTH_SHORT).show();
             }
+            mTranslationTextView.setText(wordPair != null && !TextUtils.isEmpty(wordPair.getTranslate()) ? wordPair.getTranslate() : "");
             mTranslateButton.setVisibility(View.VISIBLE);
             mActivityIndicator.setVisibility(View.GONE);
             mTranslateButton.setClickable(true);

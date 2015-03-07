@@ -46,17 +46,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             TableUtils.dropTable(connectionSource, WordPair.class, true);
             onCreate(database, connectionSource);
         } catch (SQLException e) {
-            Log.e(DatabaseHelper.class.getName(), "Can't drop databases", e);
             throw new RuntimeException(e);
         }
     }
 
     public <T> void clear(Class<T> clazz) {
         try {
-            Log.v(DatabaseHelper.class.getName(), "onClearTable " + clazz.getName());
             TableUtils.clearTable(connectionSource, clazz);
         } catch (SQLException e) {
-            Log.e(DatabaseHelper.class.getName(), "Can't clear table " + clazz.getName(), e);
             e.printStackTrace();
         }
     }

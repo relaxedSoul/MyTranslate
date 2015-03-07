@@ -12,8 +12,10 @@ public class WordPair {
 
     @DatabaseField(generatedId=true)
     private int id;
+
     @DatabaseField
     private String origin;
+
     @DatabaseField
     private String translate;
 
@@ -34,10 +36,5 @@ public class WordPair {
 
     public void setTranslate(String translate) {
         this.translate = translate;
-    }
-
-    @Override
-    public String toString() {
-        return origin + " - " + translate;
     }
 }
