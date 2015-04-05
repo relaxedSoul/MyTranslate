@@ -10,16 +10,24 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable
 public class WordPair {
 
-    @DatabaseField(generatedId=true)
-    private int id;
+    public static final String ORIGIN = "origin";
+    public static final String TRANSLATE = "translate";
 
-    @DatabaseField
+    @DatabaseField(generatedId=true)
+    private int _id;
+
+    @DatabaseField(columnName = ORIGIN)
     private String origin;
 
-    @DatabaseField
+    @DatabaseField(columnName = TRANSLATE)
     private String translate;
 
     public WordPair(){
+    }
+
+    public WordPair(String origin, String translate) {
+        setOrigin(origin);
+        setTranslate(translate);
     }
 
     public String getOrigin() {

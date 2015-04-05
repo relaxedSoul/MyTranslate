@@ -4,14 +4,16 @@ dataClass=com.melcore.mytranslate.model.WordPair
 tableName=WordPair
 # --table-fields-start--
 # --field-start--
-fieldName=id
+fieldName=_id
 generatedId=true
 # --field-end--
 # --field-start--
 fieldName=origin
+columnName=origin
 # --field-end--
 # --field-start--
 fieldName=translate
+columnName=translate
 # --field-end--
 # --table-fields-end--
 # --table-end--

@@ -6,7 +6,7 @@
     android:weightSum="2">
 
     <TextView
-        android:id="@+id/origin"
+        android:id="@+id/item_origin"
         android:layout_width="0dp"
         android:layout_height="40dp"
         android:layout_weight="1"
@@ -20,7 +20,7 @@
         android:background="#8222" />
 
     <TextView
-        android:id="@+id/translation"
+        android:id="@+id/item_translation"
         android:layout_width="0dp"
         android:layout_height="40dp"
         android:layout_weight="1"
