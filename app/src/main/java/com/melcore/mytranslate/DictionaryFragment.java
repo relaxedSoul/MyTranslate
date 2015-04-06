@@ -1,5 +1,8 @@
 package com.melcore.mytranslate;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -18,16 +21,12 @@ import android.widget.FilterQueryProvider;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.melcore.mytranslate.api.ServerApi;
 import com.melcore.mytranslate.cache.CacheUtils;
-import com.melcore.mytranslate.model.TranslateResponse;
+import com.melcore.mytranslate.model.CursorEvent;
 import com.melcore.mytranslate.model.WordPair;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 
-import java.io.IOException;
+import de.greenrobot.event.EventBus;
 
 /**
  * Main fragment
@@ -40,12 +39,25 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
 
     private CharSequence initialQuery = null;
     private SearchView mSearchView = null;
-    private GetTranslateAsyncTask mTranslateAsyncTask;
-    private EditText mTranslateEditText;
+    private EditText mOriginEditText;
     private TextView mTranslationTextView;
     private View mTranslateButton;
     private View mSaveButton;
     private View mActivityIndicator;
+
+    private GetTranslateAsyncTask mTranslateAsyncTask;
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        EventBus.getDefault().unregister(this);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -57,22 +69,22 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        View mHeader = LayoutInflater.from(getActivity()).inflate(R.layout.item_translation_add, null, false);
-        getListView().addHeaderView(mHeader, null, false);
-        mTranslateEditText = (EditText) mHeader.findViewById(R.id.origin_to_add);
-        mTranslationTextView = (TextView) mHeader.findViewById(R.id.translation);
-        mTranslateButton = mHeader.findViewById(R.id.action_translate);
+        View header = LayoutInflater.from(getActivity()).inflate(R.layout.item_translation_add, null, false);
+        getListView().addHeaderView(header, null, false);
+        mOriginEditText = (EditText) header.findViewById(R.id.origin_to_add);
+        mTranslationTextView = (TextView) header.findViewById(R.id.translation);
+        mTranslateButton = header.findViewById(R.id.action_translate);
         mTranslateButton.setOnClickListener(mOnClickListener);
-        mSaveButton = mHeader.findViewById(R.id.action_save);
+        mSaveButton = header.findViewById(R.id.action_save);
         mSaveButton.setOnClickListener(mOnClickListener);
-        mActivityIndicator = mHeader.findViewById(R.id.activity_indicator);
+        mActivityIndicator = header.findViewById(R.id.activity_indicator);
         SimpleCursorAdapter adapter = new SimpleCursorAdapter(getActivity(), R.layout.item_translation_record,
-                CacheUtils.getDefaultCursor(getActivity()), new String[]{WordPair.ORIGIN, WordPair.TRANSLATE},
+                null, new String[]{WordPair.ORIGIN, WordPair.TRANSLATE},
                 new int[]{R.id.item_origin, R.id.item_translation}, 0);
         adapter.setFilterQueryProvider(new FilterQueryProvider() {
             @Override
             public Cursor runQuery(CharSequence constraint) {
-                return CacheUtils.getCursorForFilter(getActivity(), constraint == null? "" : constraint.toString());
+                return CacheUtils.getCursorForFilter(getActivity(), constraint == null ? "" : constraint.toString());
             }
         });
         setListAdapter(adapter);
@@ -83,6 +95,9 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
         super.onActivityCreated(savedInstanceState);
         if (savedInstanceState != null) {
             initialQuery = savedInstanceState.getCharSequence(STATE_QUERY);
+        } else {
+            getActivity().startService(new Intent(getActivity(), MyIntentService.class)
+                    .putExtra(MyIntentService.Method.class.getSimpleName(), MyIntentService.Method.GET_DEFAULT_CURSOR));
         }
     }
 
@@ -126,21 +141,24 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.action_translate:
-                    getTranslation(mTranslateEditText.getText().toString());
+                    getTranslation(mOriginEditText.getText().toString());
                     break;
                 case R.id.action_save:
-                    WordPair pair = new WordPair();
-                    pair.setOrigin(mTranslateEditText.getText().toString());
-                    pair.setTranslate(mTranslationTextView.getText().toString());
-                    if (CacheUtils.saveWordPair(getActivity(), pair)) {
-                        ((SimpleCursorAdapter) getListAdapter()).swapCursor(CacheUtils.getDefaultCursor(getActivity())).close();
-                    }
+                    saveWordPair(mOriginEditText.getText().toString(), mTranslationTextView.getText().toString());
                     break;
                 default:
                     break;
             }
         }
     };
+
+    private void saveWordPair(String origin, String translate) {
+        Intent intent = new Intent(getActivity(), MyIntentService.class);
+        intent.putExtra(MyIntentService.Method.class.getSimpleName(), MyIntentService.Method.SAVE_PAIR);
+        intent.putExtra(MyIntentService.EXTRA_ORIGIN, origin);
+        intent.putExtra(MyIntentService.EXTRA_TRANSLATE, translate);
+        getActivity().startService(intent);
+    }
 
     @Override
     public boolean onQueryTextSubmit(String query) {
@@ -149,13 +167,13 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        ((SimpleCursorAdapter)getListAdapter()).getFilterQueryProvider().runQuery(newText);
+        ((SimpleCursorAdapter) getListAdapter()).getFilterQueryProvider().runQuery(newText);
         return true;
     }
 
     @Override
     public boolean onClose() {
-        ((SimpleCursorAdapter)getListAdapter()).getFilterQueryProvider().runQuery("");
+        ((SimpleCursorAdapter) getListAdapter()).getFilterQueryProvider().runQuery("");
         return true;
     }
 
@@ -166,67 +184,53 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
         if (mTranslateAsyncTask != null && mTranslateAsyncTask.getStatus() != AsyncTask.Status.FINISHED) {
             mTranslateAsyncTask.cancel(true);
         }
-        mTranslateAsyncTask = new GetTranslateAsyncTask();
-        mTranslateAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "ru", "en", text);
+        mTranslateAsyncTask = new GetTranslateAsyncTask(getActivity());
+        mTranslateAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, text, "ru", "en");
     }
 
     private class GetTranslateAsyncTask extends AsyncTask<String, Void, WordPair> {
+
+        private ServerApi api;
+
+        public GetTranslateAsyncTask(Context context) {
+            api = new ServerApi(context);
+        }
 
         @Override
         protected void onPreExecute() {
             mTranslateButton.setClickable(false);
             mSaveButton.setClickable(false);
-            mTranslateEditText.setInputType(0);
+            mOriginEditText.setInputType(0);
             mTranslateButton.setVisibility(View.INVISIBLE);
             mActivityIndicator.setVisibility(View.VISIBLE);
         }
 
         @Override
         protected WordPair doInBackground(String... params) {
-            String langSource = params[0];
-            String langTarget = params[1];
-            String text = params[2];
-            Request request;
-            request = new Request.Builder()
-                    .url(getResources().getString(R.string.url)
-                            + "?key=" + getResources().getString(R.string.key)
-                            + "&lang=" + langSource + "-" + langTarget
-                            + "&text=" + text)
-                    .build();
-            OkHttpClient client = new OkHttpClient();
-            try {
-                Response response = client.newCall(request).execute();
-                TranslateResponse translation = new Gson().fromJson(response.body().string(), (new TypeToken<TranslateResponse>() {
-                }).getType());
-                if (translation != null && translation.getCode() == 200) {
-                    WordPair pair = new WordPair();
-                    pair.setOrigin(text);
-                    pair.setTranslate(translation.getText().get(0));
-                    return pair;
-                }
-            } catch (com.google.gson.JsonSyntaxException | IllegalStateException | IOException e) {
-                e.printStackTrace();
-            }
-
-            return null;
+            return api.getTranslation(params[0], params[1], params[2]);
         }
 
         @Override
         protected void onPostExecute(WordPair wordPair) {
-            if (wordPair == null) {
-                Toast.makeText(getActivity(), R.string.conn_problem, Toast.LENGTH_SHORT).show();
+            if (!isCancelled()) {
+                if (wordPair != null) {
+                    mTranslationTextView.setText(!TextUtils.isEmpty(wordPair.getTranslate()) ? wordPair.getTranslate() : "");
+                } else {
+                    Toast.makeText(getActivity(), R.string.conn_problem, Toast.LENGTH_SHORT).show();
+                }
             }
-            mTranslationTextView.setText(wordPair != null && !TextUtils.isEmpty(wordPair.getTranslate()) ? wordPair.getTranslate() : "");
             mTranslateButton.setVisibility(View.VISIBLE);
             mActivityIndicator.setVisibility(View.GONE);
             mTranslateButton.setClickable(true);
             mSaveButton.setClickable(true);
-            mTranslateEditText.setInputType(1);
+            mOriginEditText.setInputType(1);
             mTranslateAsyncTask = null;
         }
     }
 
-    private void setDefaultContent(){
-        ((SimpleCursorAdapter) getListAdapter()).swapCursor(CacheUtils.getDefaultCursor(getActivity())).close();
+    public void onEventMainThread(CursorEvent event) {
+        if (event != null && getListAdapter() != null) {
+            ((SimpleCursorAdapter) getListAdapter()).swapCursor(event.getCursor()).close();
+        }
     }
 }

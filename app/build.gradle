@@ -25,6 +25,8 @@ dependencies {
     compile 'com.google.code.gson:gson:2.3'
     compile 'com.squareup.okhttp:okhttp:2.2.0'
     compile 'com.squareup.okio:okio:1.1.0'
+    compile 'de.greenrobot:eventbus:2.4.0'
+    compile 'com.squareup.retrofit:retrofit:1.9.0'
     compile files('libs/okhttp-urlconnection-2.0.0.jar')
     compile files('libs/ormlite-android-4.48.jar')
     compile files('libs/ormlite-core-4.48.jar')
