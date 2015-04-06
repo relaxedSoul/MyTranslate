@@ -14,18 +14,6 @@
         android:paddingRight="8dp"
         android:inputType="text" />
 
-    <TextView
-        android:id="@+id/translation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/origin_to_add"
-        android:layout_toLeftOf="@+id/action_save"
-        android:gravity="center_vertical"
-        android:textSize="20sp"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
-        android:minHeight="40dp"/>
-
     <ImageButton
         android:id="@+id/action_translate"
         android:layout_width="40dp"
@@ -40,6 +28,18 @@
         android:layout_height="40dp"
         android:layout_alignParentRight="true"
         android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/translation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/origin_to_add"
+        android:layout_toLeftOf="@+id/action_save"
+        android:gravity="center_vertical"
+        android:textSize="20sp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:minHeight="40dp"/>
 
     <ImageButton
         android:id="@+id/action_save"

@@ -1,10 +1,11 @@
 package com.melcore.mytranslate;
 
-import android.app.Activity;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ListFragment;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.widget.SearchView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -13,12 +14,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.FilterQueryProvider;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.melcore.mytranslate.adapter.DictionaryAdapter;
 import com.melcore.mytranslate.cache.CacheUtils;
 import com.melcore.mytranslate.model.TranslateResponse;
 import com.melcore.mytranslate.model.WordPair;
@@ -39,17 +40,12 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
 
     private CharSequence initialQuery = null;
     private SearchView mSearchView = null;
-    private DictionaryAdapter adapter = null;
     private GetTranslateAsyncTask mTranslateAsyncTask;
     private EditText mTranslateEditText;
     private TextView mTranslationTextView;
     private View mTranslateButton;
     private View mSaveButton;
     private View mActivityIndicator;
-
-    public static DictionaryFragment newInstance() {
-        return new DictionaryFragment();
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -70,7 +66,15 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
         mSaveButton = mHeader.findViewById(R.id.action_save);
         mSaveButton.setOnClickListener(mOnClickListener);
         mActivityIndicator = mHeader.findViewById(R.id.activity_indicator);
-        adapter = new DictionaryAdapter(CacheUtils.loadWordPairs(getActivity()));
+        SimpleCursorAdapter adapter = new SimpleCursorAdapter(getActivity(), R.layout.item_translation_record,
+                CacheUtils.getDefaultCursor(getActivity()), new String[]{WordPair.ORIGIN, WordPair.TRANSLATE},
+                new int[]{R.id.item_origin, R.id.item_translation}, 0);
+        adapter.setFilterQueryProvider(new FilterQueryProvider() {
+            @Override
+            public Cursor runQuery(CharSequence constraint) {
+                return CacheUtils.getCursorForFilter(getActivity(), constraint == null? "" : constraint.toString());
+            }
+        });
         setListAdapter(adapter);
     }
 
@@ -85,7 +89,6 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
     @Override
     public void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
-
         if (!mSearchView.isIconified()) {
             state.putCharSequence(STATE_QUERY, mSearchView.getQuery());
         }
@@ -100,18 +103,22 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
 
     private void configureSearchView(Menu menu) {
         MenuItem search = menu.findItem(R.id.search);
-
         mSearchView = (SearchView) search.getActionView();
         mSearchView.setOnQueryTextListener(this);
         mSearchView.setOnCloseListener(this);
         mSearchView.setSubmitButtonEnabled(false);
         mSearchView.setIconifiedByDefault(true);
-
         if (initialQuery != null) {
             mSearchView.setIconified(false);
             search.expandActionView();
             mSearchView.setQuery(initialQuery, true);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        CacheUtils.releaseInstance();
     }
 
     private View.OnClickListener mOnClickListener = new View.OnClickListener() {
@@ -126,7 +133,7 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
                     pair.setOrigin(mTranslateEditText.getText().toString());
                     pair.setTranslate(mTranslationTextView.getText().toString());
                     if (CacheUtils.saveWordPair(getActivity(), pair)) {
-                        adapter.add(pair);
+                        ((SimpleCursorAdapter) getListAdapter()).swapCursor(CacheUtils.getDefaultCursor(getActivity())).close();
                     }
                     break;
                 default:
@@ -142,13 +149,13 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        adapter.getFilter().filter(TextUtils.isEmpty(newText) ? "" : newText);
+        ((SimpleCursorAdapter)getListAdapter()).getFilterQueryProvider().runQuery(newText);
         return true;
     }
 
     @Override
     public boolean onClose() {
-        adapter.getFilter().filter("");
+        ((SimpleCursorAdapter)getListAdapter()).getFilterQueryProvider().runQuery("");
         return true;
     }
 
@@ -206,14 +213,10 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
 
         @Override
         protected void onPostExecute(WordPair wordPair) {
-            if (wordPair != null && !TextUtils.isEmpty(wordPair.getTranslate())) {
-                mTranslationTextView.setText(wordPair.getTranslate());
-            } else if (wordPair == null && !isCancelled()) {
-                Activity activity = DictionaryFragment.this.getActivity();
-                if (activity != null) {
-                    Toast.makeText(activity, R.string.conn_problem, Toast.LENGTH_SHORT).show();
-                }
+            if (wordPair == null) {
+                Toast.makeText(getActivity(), R.string.conn_problem, Toast.LENGTH_SHORT).show();
             }
+            mTranslationTextView.setText(wordPair != null && !TextUtils.isEmpty(wordPair.getTranslate()) ? wordPair.getTranslate() : "");
             mTranslateButton.setVisibility(View.VISIBLE);
             mActivityIndicator.setVisibility(View.GONE);
             mTranslateButton.setClickable(true);
@@ -221,5 +224,9 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
             mTranslateEditText.setInputType(1);
             mTranslateAsyncTask = null;
         }
+    }
+
+    private void setDefaultContent(){
+        ((SimpleCursorAdapter) getListAdapter()).swapCursor(CacheUtils.getDefaultCursor(getActivity())).close();
     }
 }

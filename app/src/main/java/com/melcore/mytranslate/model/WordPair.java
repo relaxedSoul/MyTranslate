@@ -10,14 +10,24 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable
 public class WordPair {
 
+    public static final String ORIGIN = "origin";
+    public static final String TRANSLATE = "translate";
+
     @DatabaseField(generatedId=true)
-    private int id;
-    @DatabaseField
+    private int _id;
+
+    @DatabaseField(columnName = ORIGIN)
     private String origin;
-    @DatabaseField
+
+    @DatabaseField(columnName = TRANSLATE)
     private String translate;
 
     public WordPair(){
+    }
+
+    public WordPair(String origin, String translate) {
+        setOrigin(origin);
+        setTranslate(translate);
     }
 
     public String getOrigin() {
@@ -34,10 +44,5 @@ public class WordPair {
 
     public void setTranslate(String translate) {
         this.translate = translate;
-    }
-
-    @Override
-    public String toString() {
-        return origin + " - " + translate;
     }
 }

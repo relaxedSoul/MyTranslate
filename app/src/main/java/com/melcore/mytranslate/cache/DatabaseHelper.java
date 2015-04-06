@@ -21,7 +21,7 @@ import java.sql.SQLException;
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
     private static final String DATABASE_NAME = "MyDictionary.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 3;
 
     private RuntimeExceptionDao<WordPair, Integer> wordPairExceptionDao = null;
 
@@ -46,17 +46,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             TableUtils.dropTable(connectionSource, WordPair.class, true);
             onCreate(database, connectionSource);
         } catch (SQLException e) {
-            Log.e(DatabaseHelper.class.getName(), "Can't drop databases", e);
             throw new RuntimeException(e);
         }
     }
 
     public <T> void clear(Class<T> clazz) {
         try {
-            Log.v(DatabaseHelper.class.getName(), "onClearTable " + clazz.getName());
             TableUtils.clearTable(connectionSource, clazz);
         } catch (SQLException e) {
-            Log.e(DatabaseHelper.class.getName(), "Can't clear table " + clazz.getName(), e);
             e.printStackTrace();
         }
     }
