@@ -6,6 +6,7 @@ import android.text.TextUtils;
 
 import com.j256.ormlite.android.AndroidDatabaseResults;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
+import com.j256.ormlite.stmt.QueryBuilder;
 import com.melcore.mytranslate.model.WordPair;
 
 import java.sql.SQLException;
@@ -18,10 +19,9 @@ public abstract class CacheUtils {
 
     private static DatabaseHelper sInstance = null;
 
-    public static DatabaseHelper getInstance(Context context) {
-        if (context != null && sInstance == null) {
-            sInstance = OpenHelperManager.getHelper(context.getApplicationContext(),
-                    DatabaseHelper.class);
+    private static DatabaseHelper getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = OpenHelperManager.getHelper(context.getApplicationContext(), DatabaseHelper.class);
         }
         return sInstance;
     }
@@ -45,18 +45,27 @@ public abstract class CacheUtils {
     }
 
     public static Cursor getDefaultCursor(Context context) {
-        return context == null ? null : ((AndroidDatabaseResults) getInstance(context).getWordPairDao().iterator().getRawResults()).getRawCursor();
+        if (context == null) {
+            return null;
+        }
+        return ((AndroidDatabaseResults) getInstance(context).getWordPairDao().iterator().getRawResults()).getRawCursor();
     }
 
     public static Cursor getCursorForFilter(Context context, String filter) {
-        try {
-            return context == null ? null : TextUtils.isEmpty(filter) ? getDefaultCursor(context)
-                    : ((AndroidDatabaseResults) getInstance(context).getWordPairDao().queryBuilder().where()
-                    .like(WordPair.ORIGIN, "%" + filter + "%")
-                    .or().like(WordPair.TRANSLATE, "%" + filter + "%")
-                    .iterator().getRawResults()).getRawCursor();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (context != null) {
+            try {
+                if (TextUtils.isEmpty(filter)) {
+                    return getDefaultCursor(context);
+                } else {
+                    QueryBuilder<WordPair, Integer> qb = getInstance(context).getWordPairDao().queryBuilder();
+                    qb.where().like(WordPair.ORIGIN, "%" + filter + "%").or().like(WordPair.TRANSLATE, "%" + filter + "%");
+                    AndroidDatabaseResults results = (AndroidDatabaseResults) qb.iterator().getRawResults();
+                    Cursor result = results.getRawCursor();
+                    return result;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
         return null;
     }

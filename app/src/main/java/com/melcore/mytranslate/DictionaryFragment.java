@@ -21,10 +21,11 @@ import android.widget.FilterQueryProvider;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.melcore.mytranslate.MyTranslateIntentService.Method;
 import com.melcore.mytranslate.api.ServerApi;
 import com.melcore.mytranslate.cache.CacheUtils;
-import com.melcore.mytranslate.model.CursorEvent;
 import com.melcore.mytranslate.model.WordPair;
+import com.melcore.mytranslate.model.event.CursorEvent;
 
 import de.greenrobot.event.EventBus;
 
@@ -78,16 +79,6 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
         mSaveButton = header.findViewById(R.id.action_save);
         mSaveButton.setOnClickListener(mOnClickListener);
         mActivityIndicator = header.findViewById(R.id.activity_indicator);
-        SimpleCursorAdapter adapter = new SimpleCursorAdapter(getActivity(), R.layout.item_translation_record,
-                null, new String[]{WordPair.ORIGIN, WordPair.TRANSLATE},
-                new int[]{R.id.item_origin, R.id.item_translation}, 0);
-        adapter.setFilterQueryProvider(new FilterQueryProvider() {
-            @Override
-            public Cursor runQuery(CharSequence constraint) {
-                return CacheUtils.getCursorForFilter(getActivity(), constraint == null ? "" : constraint.toString());
-            }
-        });
-        setListAdapter(adapter);
     }
 
     @Override
@@ -95,10 +86,16 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
         super.onActivityCreated(savedInstanceState);
         if (savedInstanceState != null) {
             initialQuery = savedInstanceState.getCharSequence(STATE_QUERY);
-        } else {
-            getActivity().startService(new Intent(getActivity(), MyIntentService.class)
-                    .putExtra(MyIntentService.Method.class.getSimpleName(), MyIntentService.Method.GET_DEFAULT_CURSOR));
         }
+        if (getListAdapter() == null || getListAdapter().isEmpty()) {
+            getDefaultCursor();
+        }
+    }
+
+    private void getDefaultCursor() {
+        Intent intent = new Intent(getActivity(), MyTranslateIntentService.class);
+        intent.putExtra(Method.class.getSimpleName(), Method.GET_DEFAULT_CURSOR);
+        getActivity().startService(intent);
     }
 
     @Override
@@ -153,10 +150,10 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
     };
 
     private void saveWordPair(String origin, String translate) {
-        Intent intent = new Intent(getActivity(), MyIntentService.class);
-        intent.putExtra(MyIntentService.Method.class.getSimpleName(), MyIntentService.Method.SAVE_PAIR);
-        intent.putExtra(MyIntentService.EXTRA_ORIGIN, origin);
-        intent.putExtra(MyIntentService.EXTRA_TRANSLATE, translate);
+        Intent intent = new Intent(getActivity(), MyTranslateIntentService.class);
+        intent.putExtra(MyTranslateIntentService.Method.class.getSimpleName(), MyTranslateIntentService.Method.SAVE_PAIR);
+        intent.putExtra(MyTranslateIntentService.EXTRA_ORIGIN, origin);
+        intent.putExtra(MyTranslateIntentService.EXTRA_TRANSLATE, translate);
         getActivity().startService(intent);
     }
 
@@ -167,13 +164,17 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        ((SimpleCursorAdapter) getListAdapter()).getFilterQueryProvider().runQuery(newText);
+        if (getListAdapter() != null) {
+            ((SimpleCursorAdapter) getListAdapter()).getFilter().filter(newText);
+        }
         return true;
     }
 
     @Override
     public boolean onClose() {
-        ((SimpleCursorAdapter) getListAdapter()).getFilterQueryProvider().runQuery("");
+        if (getListAdapter() != null) {
+            ((SimpleCursorAdapter) getListAdapter()).getFilterQueryProvider().runQuery("");
+        }
         return true;
     }
 
@@ -229,8 +230,22 @@ public class DictionaryFragment extends ListFragment implements SearchView.OnQue
     }
 
     public void onEventMainThread(CursorEvent event) {
-        if (event != null && getListAdapter() != null) {
+        if (event == null) return;
+        if (getListAdapter() != null) {
             ((SimpleCursorAdapter) getListAdapter()).swapCursor(event.getCursor()).close();
+        } else {
+            SimpleCursorAdapter adapter = new SimpleCursorAdapter(getActivity(), R.layout.item_translation_record,
+                    event.getCursor(), new String[]{WordPair.ORIGIN, WordPair.TRANSLATE},
+                    new int[]{R.id.item_origin, R.id.item_translation}, 0);
+            adapter.setFilterQueryProvider(mFilterQueryProvider);
+            setListAdapter(adapter);
         }
     }
+
+    private FilterQueryProvider mFilterQueryProvider = new FilterQueryProvider() {
+        @Override
+        public Cursor runQuery(CharSequence constraint) {
+            return CacheUtils.getCursorForFilter(getActivity(), constraint == null ? "" : constraint.toString());
+        }
+    };
 }

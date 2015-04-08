@@ -1,4 +1,4 @@
-package com.melcore.mytranslate.model;
+package com.melcore.mytranslate.model.event;
 
 import android.database.Cursor;
 

@@ -10,10 +10,12 @@ generatedId=true
 # --field-start--
 fieldName=origin
 columnName=origin
+useGetSet=true
 # --field-end--
 # --field-start--
 fieldName=translate
 columnName=translate
+useGetSet=true
 # --field-end--
 # --table-fields-end--
 # --table-end--

@@ -16,10 +16,10 @@ public class WordPair {
     @DatabaseField(generatedId=true)
     private int _id;
 
-    @DatabaseField(columnName = ORIGIN)
+    @DatabaseField(columnName = ORIGIN, useGetSet = true)
     private String origin;
 
-    @DatabaseField(columnName = TRANSLATE)
+    @DatabaseField(columnName = TRANSLATE, useGetSet = true)
     private String translate;
 
     public WordPair(){

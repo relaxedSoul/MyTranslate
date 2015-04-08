@@ -1,19 +1,19 @@
-package com.melcore.mytranslate.model;
+package com.melcore.mytranslate.api;
 
 import java.util.List;
 
 /**
  * Response from yandex translate.
- *
+ * <p/>
  * Created by Melcore on 03.03.2015.
  */
-public class TranslateResponse {
+class YandexResponse {
 
     private int code;
     private String lang;
     private List<String> text;
 
-    public TranslateResponse(){
+    public YandexResponse() {
 
     }
 

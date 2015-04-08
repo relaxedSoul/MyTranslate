@@ -5,17 +5,13 @@ import android.support.v7.app.ActionBarActivity;
 
 public class MainActivity extends ActionBarActivity {
 
-    DictionaryFragment mDictionaryFragment;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mDictionaryFragment = (DictionaryFragment) getSupportFragmentManager().findFragmentByTag(DictionaryFragment.class.getName());
-        if (mDictionaryFragment == null) {
-            mDictionaryFragment = new DictionaryFragment();
+        if (getSupportFragmentManager().findFragmentByTag(DictionaryFragment.class.getSimpleName()) == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, mDictionaryFragment, DictionaryFragment.class.getName())
+                    .add(R.id.container, new DictionaryFragment(), DictionaryFragment.class.getSimpleName())
                     .commit();
         }
     }

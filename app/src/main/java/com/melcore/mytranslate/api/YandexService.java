@@ -1,16 +1,13 @@
 package com.melcore.mytranslate.api;
 
-import com.melcore.mytranslate.model.TranslateResponse;
-import com.melcore.mytranslate.model.WordPair;
+import java.util.Map;
 
 import retrofit.http.GET;
 import retrofit.http.Path;
+import retrofit.http.QueryMap;
 
-/**
- * Created by user on 06/04/15.
- */
-public interface YandexService {
+interface YandexService {
 
-    @GET("/api/v1.5/tr.json/translate?key={key}&lang={lang}&text={text}")
-    TranslateResponse getTranslation(@Path("key") String key,@Path("lang") String lang, @Path("text") String text);
+    @GET("/api/v1.5/tr.json/translate")
+    YandexResponse translate(@QueryMap() Map<String,String> options);
 }
